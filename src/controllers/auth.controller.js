@@ -92,11 +92,18 @@ const login = async (req, res) => {
     const token = createToken(user._id);
     const userData = await User.findById(user._id).select("-password");
 
-    res.status(200).json({
-      message: "User logged in",
-      token,
-      user: userData,
-    });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json({
+        message: "User logged in",
+        user: userData,
+      });
   } catch (error) {
     res.status(500).json({
       message: "Internal server error",
