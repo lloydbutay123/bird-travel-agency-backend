@@ -31,12 +31,6 @@ const userSchema = new Schema(
       minLength: 6,
       maxLength: 50,
     },
-    confirmPassword: {
-      type: String,
-      required: true,
-      minLength: 6,
-      maxLength: 50,
-    },
   },
   {
     timestamps: true,

@@ -48,10 +48,13 @@ const signup = async (req, res) => {
       loggedIn: false,
     });
 
+    const token = createToken(user._id);
+
     res.status(201).json({
       message: "User registered",
+      token,
       user: {
-        id: user._id,
+        _id: user._id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
