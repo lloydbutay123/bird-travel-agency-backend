@@ -1,9 +1,24 @@
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
+  });
+};
+
+const generateOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
   });
 };
 
@@ -156,4 +171,177 @@ const logout = async (req, res) => {
   }
 };
 
-export { signup, login, getMe, logout };
+const forgotPassword = async (req, res) => {
+  const transporter = createTransporter();
+
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const otp = generateOtp();
+
+    user.resetOtp = otp;
+    user.resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetOtpVerified = false;
+
+    await user.save();
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Password Reset OTP",
+      html: `
+        <h2>Password Reset</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This code will expire in 10 minutes.</p>
+      `,
+    });
+
+    return res.status(200).json({
+      message: "OTP sent to email",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const verifyResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Email and OTP are required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+      });
+    }
+
+    if (!user.resetOtp || !user.resetOtpExpiresAt) {
+      return res.status(400).json({
+        message: "No OTP found",
+      });
+    }
+
+    if (user.resetOtp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    if (user.resetOtpExpiresAt < new Date()) {
+      return res.status(400).json({
+        message: "OTP has expired",
+      });
+    }
+
+    user.resetOtpVerified = false;
+    await user.save();
+
+    return res.status(200).json({
+      message: "OTP verified successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, password, confirmPassword } = req.body;
+
+    if (!email || !otp || !password || !confirmPassword) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+      });
+    }
+
+    if (!user.resetOtp || !user.resetOtpExpiresAt) {
+      return res.status(400).json({
+        message: "No OTP found",
+      });
+    }
+
+    if (user.resetOtp !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    if (user.resetOtpExpiresAt < new Date()) {
+      return res.status(400).json({
+        message: "OTP has expired",
+      });
+    }
+
+    user.password = password;
+    user.resetOtp = undefined;
+    user.resetOtpExpiresAt = undefined;
+    user.resetOtpVerified = false;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successful",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+export {
+  signup,
+  login,
+  getMe,
+  logout,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
+};

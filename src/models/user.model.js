@@ -29,7 +29,16 @@ const userSchema = new Schema(
       type: String,
       required: true,
       minLength: 6,
-      maxLength: 50,
+    },
+    loggedIn: {
+      type: Boolean,
+      default: false,
+    },
+    resetOtp: String,
+    resetOtpExpiresAt: Date,
+    resetOtpVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   {
