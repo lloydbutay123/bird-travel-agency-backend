@@ -87,14 +87,12 @@ const login = async (req, res) => {
       });
 
     const token = createToken(user._id);
+    const userData = await User.findById(user._id).select("-password");
 
     res.status(200).json({
       message: "User logged in",
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-      },
+      user: userData,
     });
   } catch (error) {
     res.status(500).json({
