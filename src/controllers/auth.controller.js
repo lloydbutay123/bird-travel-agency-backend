@@ -173,7 +173,10 @@ const logout = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
+    console.log("forgotPassword hit");
+
     const { email } = req.body;
+    console.log("email:", email);
 
     if (!email) {
       return res.status(400).json({
@@ -182,9 +185,10 @@ const forgotPassword = async (req, res) => {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
-    const user = await User.findOne({
-      email: normalizedEmail,
-    });
+    console.log("normalizedEmail:", normalizedEmail);
+
+    const user = await User.findOne({ email: normalizedEmail });
+    console.log("user found:", !!user);
 
     if (!user) {
       return res.status(404).json({
@@ -193,14 +197,20 @@ const forgotPassword = async (req, res) => {
     }
 
     const otp = generateOtp();
+    console.log("otp generated");
 
     user.resetOtp = otp;
     user.resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     user.resetOtpVerified = false;
 
     await user.save();
+    console.log("user saved");
 
     const transporter = createTransporter();
+    console.log("transporter created");
+
+    await transporter.verify();
+    console.log("transporter verified");
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -214,10 +224,14 @@ const forgotPassword = async (req, res) => {
       `,
     });
 
+    console.log("mail sent");
+
     return res.status(200).json({
       message: "OTP sent to email",
     });
   } catch (error) {
+    console.error("forgotPassword error:", error);
+
     return res.status(500).json({
       message: "Internal server error",
       error: error.message,
