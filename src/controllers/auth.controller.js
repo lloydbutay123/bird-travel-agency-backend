@@ -1,6 +1,6 @@
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -10,16 +10,6 @@ const createToken = (userId) => {
 
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
 };
 
 const signup = async (req, res) => {
@@ -173,10 +163,9 @@ const logout = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    console.log("forgotPassword hit");
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { email } = req.body;
-    console.log("email:", email);
 
     if (!email) {
       return res.status(400).json({
@@ -185,10 +174,8 @@ const forgotPassword = async (req, res) => {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
-    console.log("normalizedEmail:", normalizedEmail);
 
     const user = await User.findOne({ email: normalizedEmail });
-    console.log("user found:", !!user);
 
     if (!user) {
       return res.status(404).json({
@@ -197,23 +184,15 @@ const forgotPassword = async (req, res) => {
     }
 
     const otp = generateOtp();
-    console.log("otp generated");
 
     user.resetOtp = otp;
     user.resetOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
     user.resetOtpVerified = false;
 
     await user.save();
-    console.log("user saved");
 
-    const transporter = createTransporter();
-    console.log("transporter created");
-
-    await transporter.verify();
-    console.log("transporter verified");
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: user.email,
       subject: "Password Reset OTP",
       html: `
@@ -223,8 +202,6 @@ const forgotPassword = async (req, res) => {
         <p>This code will expire in 10 minutes.</p>
       `,
     });
-
-    console.log("mail sent");
 
     return res.status(200).json({
       message: "OTP sent to email",
