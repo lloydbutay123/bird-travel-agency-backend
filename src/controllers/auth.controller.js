@@ -1,36 +1,61 @@
 import { User } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 
-const registerUser = async (req, res) => {
+const createToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
+const signup = async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { firstName, lastName, email, phone, password, confirmPassword } =
+      req.body;
 
-    if (!username || !password || !email) {
+    if (
+      !firstName ||
+      !lastName ||
+      !password ||
+      !email ||
+      !phone ||
+      !confirmPassword
+    ) {
       return res.status(400).json({ message: "All fields are required!" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match!",
+      });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
 
     console.log("Checking email:", normalizedEmail);
 
-    const exisiting = await User.findOne({ email: normalizedEmail });
+    const exisitng = await User.findOne({ email: normalizedEmail });
 
-    if (exisiting) {
+    if (exisitng) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const user = await User.create({
       email: normalizedEmail,
-      username,
+      firstName,
+      lastName,
+      phone,
       password,
       loggedIn: false,
     });
 
-    res.status(202).json({
+    res.status(201).json({
       message: "User registered",
       user: {
         id: user._id,
         email: user.email,
-        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
       },
     });
   } catch (error) {
@@ -40,7 +65,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-const loginUser = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -61,12 +86,14 @@ const loginUser = async (req, res) => {
         message: "Invalid credentials",
       });
 
+    const token = createToken(user._id);
+
     res.status(200).json({
       message: "User logged in",
+      token,
       user: {
         id: user._id,
         email: user.email,
-        username: user.username,
       },
     });
   } catch (error) {
@@ -77,4 +104,17 @@ const loginUser = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser };
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export { signup, login, getMe };
