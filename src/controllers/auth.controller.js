@@ -172,8 +172,6 @@ const logout = async (req, res) => {
 };
 
 const forgotPassword = async (req, res) => {
-  const transporter = createTransporter();
-
   try {
     const { email } = req.body;
 
@@ -201,6 +199,8 @@ const forgotPassword = async (req, res) => {
     user.resetOtpVerified = false;
 
     await user.save();
+
+    const transporter = createTransporter();
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -262,7 +262,7 @@ const verifyResetOtp = async (req, res) => {
       });
     }
 
-    user.resetOtpVerified = false;
+    user.resetOtpVerified = true;
     await user.save();
 
     return res.status(200).json({
@@ -316,6 +316,12 @@ const resetPassword = async (req, res) => {
     if (user.resetOtpExpiresAt < new Date()) {
       return res.status(400).json({
         message: "OTP has expired",
+      });
+    }
+
+    if (!user.resetOtpVerified) {
+      return res.status(400).json({
+        message: "OTP not verified",
       });
     }
 
