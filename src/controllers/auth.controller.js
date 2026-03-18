@@ -49,18 +49,26 @@ const signup = async (req, res) => {
     });
 
     const token = createToken(user._id);
+    const isProduction = process.env.NODE_ENV === "production";
 
-    res.status(201).json({
-      message: "User registered",
-      token,
-      user: {
-        _id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-      },
-    });
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      })
+      .status(201)
+      .json({
+        message: "User registered",
+        user: {
+          _id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+        },
+      });
   } catch (error) {
     res
       .status(500)
@@ -91,12 +99,13 @@ const login = async (req, res) => {
 
     const token = createToken(user._id);
     const userData = await User.findById(user._id).select("-password");
+    const isProduction = process.env.NODE_ENV === "production";
 
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(200)
