@@ -41,6 +41,18 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    pendingEmail: {
+      type: String,
+      default: null,
+    },
+    emailChangeOtp: {
+      type: String,
+      default: null,
+    },
+    emailChangeOtpExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
