@@ -127,19 +127,6 @@ const login = async (req, res) => {
   }
 };
 
-const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select("-password");
-
-    res.status(200).json(user);
-  } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
-      error: error.message,
-    });
-  }
-};
-
 const logout = async (req, res) => {
   try {
     const isProduction = process.env.NODE_ENV === "production";
@@ -390,7 +377,6 @@ const changePassword = async (req, res) => {
 export {
   signup,
   login,
-  getMe,
   logout,
   forgotPassword,
   verifyResetOtp,
