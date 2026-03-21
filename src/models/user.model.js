@@ -26,10 +26,46 @@ const userSchema = new Schema(
       required: true,
       trim: true,
     },
+    dateOfBirth: {
+      type: Date,
+      validate: {
+        validator: function (value) {
+          return !value || value <= new Date();
+        },
+        message: "Date of birth cannot be in the future",
+      },
+    },
     password: {
       type: String,
       required: true,
       minLength: 6,
+    },
+    address: {
+      region: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      province: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      city: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      barangay: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      zipCode: {
+        type: String,
+        trim: true,
+        default: "",
+      },
     },
     loggedIn: {
       type: Boolean,

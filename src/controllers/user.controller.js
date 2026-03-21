@@ -19,7 +19,18 @@ const updateUser = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const { firstName, lastName, phone, address } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      dateOfBirth,
+      region,
+      province,
+      city,
+      barangay,
+      zipCode,
+    } = req.body;
 
     const user = await User.findById(userId);
 
@@ -33,6 +44,13 @@ const updateUser = async (req, res) => {
     if (lastName) user.lastName = lastName;
     if (phone) user.phone = phone;
     if (address) user.address = address;
+    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+
+    if (region) user.address.region = region;
+    if (province) user.address.province = province;
+    if (city) user.address.city = city;
+    if (barangay) user.address.barangay = barangay;
+    if (zipCode) user.address.zipCode = zipCode;
 
     await user.save();
 
