@@ -1,20 +1,18 @@
 import nodemailer from "nodemailer";
+import { pdfPath } from "./pdf.service.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
-
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
 });
 
-export const sendInquiryEmail = async (data, pdfBuffer) => {
+export const sendInquiryEmail = async (data) => {
   await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-
+    from: process.env.EMAIL_USER,
     to: data.email,
-
     subject: "Your Travel Inquiry Confirmation",
 
     html: `
@@ -32,7 +30,7 @@ export const sendInquiryEmail = async (data, pdfBuffer) => {
         </p>
 
         <p>
-          Your inquiry confirmation PDF is attached to this email.
+          Your travel inquiry PDF is attached to this email.
         </p>
 
         <br />
@@ -46,7 +44,7 @@ export const sendInquiryEmail = async (data, pdfBuffer) => {
     attachments: [
       {
         filename: "travel-inquiry.pdf",
-        content: pdfBuffer,
+        path: pdfPath,
         contentType: "application/pdf",
       },
     ],
