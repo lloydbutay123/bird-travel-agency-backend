@@ -13,7 +13,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:3001",
       "https://bird-travel-agency-frontend.vercel.app",
-      "https://mytravelicious-travel-agency.vercel.app/",
+      "https://mytravelicious-travel-agency.vercel.app",
     ],
     credentials: true,
   }),
