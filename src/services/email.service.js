@@ -9,6 +9,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+console.log("EMAIL CONFIG:", {
+  user: process.env.EMAIL_USER,
+  passwordExists: !!process.env.EMAIL_PASSWORD,
+});
+
 export const sendInquiryEmail = async (data, pdfBuffer) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
