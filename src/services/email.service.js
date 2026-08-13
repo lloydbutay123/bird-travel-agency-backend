@@ -1,11 +1,31 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+
+  tls: {
+    family: 4,
+  },
+});
+
+console.log("EMAIL CONFIG:", {
+  user: process.env.EMAIL_USER,
+  passwordExists: !!process.env.EMAIL_PASSWORD,
+});
 
 export const sendInquiryEmail = async (data) => {
-  const { data: emailData, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+
     to: data.email,
+
     subject: "Your Travel Inquiry Confirmation",
 
     html: `
@@ -48,13 +68,4 @@ export const sendInquiryEmail = async (data) => {
     //   },
     // ],
   });
-
-  if (error) {
-    console.error("Resend email error:", error);
-    throw new Error(error.message);
-  }
-
-  console.log("Email sent:", emailData);
-
-  return emailData;
 };
