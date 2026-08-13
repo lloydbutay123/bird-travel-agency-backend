@@ -2,6 +2,9 @@ import { createTravelInquiry } from "../services/travelInquiry.service.js";
 
 export const submitTravelInquiry = async (req, res) => {
   try {
+    console.log("POST /travel-inquiries received");
+    console.log("Body:", req.body);
+
     const { fullName, email, phone, address, inquiry } = req.body;
 
     // Validate required fields
@@ -31,7 +34,7 @@ export const submitTravelInquiry = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Failed to submit travel inquiry.",
+      message: error?.message || "Failed to submit travel inquiry.",
     });
   }
 };
